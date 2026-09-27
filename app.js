@@ -10,6 +10,7 @@ const PHOTON = 'https://photon.komoot.io/api/';
 const VALHALLA = 'https://valhalla1.openstreetmap.de/route';
 const DEFAULT_START = { lat: 43.4474, lng: -80.4937, label: 'Victoria Park, Kitchener' };
 const DEFAULT_END = { lat: 43.4644, lng: -80.5222, label: 'Waterloo Public Square' };
+const TOILET_ICON = '<svg class="toilet-icon" viewBox="0 0 32 32" aria-hidden="true"><path d="M6 4h10v11H6zM5 15h21c0 6-4 10-10 10S6 21 6 16"/><path d="M15 25v3m-5 0h11M16 8h3"/></svg>';
 
 const planner = document.querySelector('#planner');
 const drawer = document.querySelector('#saved-drawer');
@@ -101,10 +102,10 @@ function updateSaved() {
   const list = document.querySelector('#saved-list');
   const savedFacilities = saved.map(id => facilities.find(item => item.id === id)).filter(Boolean);
   if (!savedFacilities.length) {
-    list.innerHTML = '<div class="empty-state"><b>No saved thrones yet</b><span>Search a route, tap any washroom on the live map, then save it for later.</span></div>';
+    list.innerHTML = `<div class="empty-state"><span class="empty-state__icon">${TOILET_ICON}</span><b>No saved washrooms yet</b><span>Search a route, select any toilet on the live map, then save it for later.</span></div>`;
     return;
   }
-  list.innerHTML = savedFacilities.map(item => `<article class="saved-item"><div class="saved-item__top"><div><h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(statusText(item))}</p></div><button data-remove="${item.id}" aria-label="Remove ${escapeHtml(item.name)}">×</button></div><div class="saved-tags">${facilityTags(item).map(tag => `<span>${escapeHtml(tag)}</span>`).join('')}</div></article>`).join('');
+  list.innerHTML = savedFacilities.map(item => `<article class="saved-item"><div class="saved-item__top"><span class="saved-item__icon">${TOILET_ICON}</span><div><span class="facility-kicker">PUBLIC WASHROOM</span><h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(statusText(item))}</p></div><button data-remove="${item.id}" aria-label="Remove ${escapeHtml(item.name)}">×</button></div><div class="saved-tags">${facilityTags(item).map(tag => `<span>${escapeHtml(tag)}</span>`).join('')}</div></article>`).join('');
 }
 
 function openDrawer() {
@@ -124,7 +125,7 @@ function openDetail(id) {
   const item = facilities.find(facility => facility.id === id);
   if (!item) return;
   const officialLink = item.url ? `<a class="city-link" href="${escapeHtml(item.url)}" target="_blank" rel="noopener">OpenStreetMap details ↗</a>` : '';
-  detail.innerHTML = `<h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(item.address || item.location || 'Mapped public washroom')}</p><p>${escapeHtml(statusText(item))}</p><div class="saved-tags">${facilityTags(item).map(tag => `<span>${escapeHtml(tag)}</span>`).join('')}</div>${officialLink}<div class="detail-actions"><button class="save-throne" data-save="${item.id}">${saved.includes(item.id) ? 'Saved ✓' : 'Save this throne'}</button><button class="close-detail">Close</button></div>`;
+  detail.innerHTML = `<div class="detail-type">${TOILET_ICON}<span>PUBLIC WASHROOM</span></div><h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(item.address || item.location || 'Mapped public washroom')}</p><p>${escapeHtml(statusText(item))}</p><div class="saved-tags">${facilityTags(item).map(tag => `<span>${escapeHtml(tag)}</span>`).join('')}</div>${officialLink}<div class="detail-actions"><button class="save-throne" data-save="${item.id}">${saved.includes(item.id) ? 'Saved ✓' : 'Save washroom'}</button><button class="close-detail">Close</button></div>`;
   detail.classList.add('open');
   detail.setAttribute('aria-hidden', 'false');
 }
@@ -521,7 +522,7 @@ function renderRouteMarkers(stops) {
   throneLayer.clearLayers();
   thrones = stops;
   stops.forEach((item, index) => {
-    L.marker([item.lat, item.lng], { icon: icon('live-pin', `<span>${index + 1}</span>`), keyboard: true, title: item.name }).on('click', () => openDetail(item.id)).addTo(throneLayer);
+    L.marker([item.lat, item.lng], { icon: icon('live-pin', `<span class="live-pin__content">${TOILET_ICON}<b>${index + 1}</b></span>`), keyboard: true, title: `${item.name} public washroom` }).on('click', () => openDetail(item.id)).addTo(throneLayer);
   });
 }
 
@@ -529,7 +530,7 @@ function renderNearbyMarkers() {
   throneLayer.clearLayers();
   const bounds = map.getBounds();
   const nearby = facilities.filter(item => passesFilters(item) && bounds.contains([item.lat, item.lng])).slice(0, 180);
-  nearby.forEach(item => L.marker([item.lat, item.lng], { icon: icon('live-pin live-pin--nearby'), keyboard: true, title: item.name }).on('click', () => openDetail(item.id)).addTo(throneLayer));
+  nearby.forEach(item => L.marker([item.lat, item.lng], { icon: icon('live-pin live-pin--nearby', `<span class="live-pin__content">${TOILET_ICON}</span>`), keyboard: true, title: `${item.name} public washroom` }).on('click', () => openDetail(item.id)).addTo(throneLayer));
 }
 
 function renderEndpoints() {
@@ -562,7 +563,7 @@ function renderItinerary(route, stops) {
     const arrivalStatus = incoming ? comfortStatus(incoming.time) : 'safe';
     const nextStatus = next ? comfortStatus(next.time) : arrivalStatus;
     const badge = index === 0 ? 'START' : statusLabels[arrivalStatus];
-    const marker = index === 0 ? 'S' : index === waypoints.length - 1 ? '◆' : String(index);
+    const marker = index === 0 ? 'S' : index === waypoints.length - 1 ? '◆' : `${TOILET_ICON}<b>${index}</b>`;
     const timing = index === 0 ? 'Depart now' : `ETA ${roundedMinutes(elapsed)} min · ${roundedMinutes(incoming.time)} min since last stop`;
     let nextText = '';
     if (next) {
@@ -725,7 +726,7 @@ detail.addEventListener('click', event => {
   if (event.target.matches('.close-detail')) { detail.classList.remove('open'); detail.setAttribute('aria-hidden', 'true'); }
   if (event.target.matches('[data-save]')) {
     const id = event.target.dataset.save;
-    if (!saved.includes(id)) { saved.push(id); updateSaved(); event.target.textContent = 'Saved ✓'; showToast('Throne saved for later'); }
+    if (!saved.includes(id)) { saved.push(id); updateSaved(); event.target.textContent = 'Saved ✓'; showToast('Washroom saved for later'); }
   }
 });
 
@@ -734,7 +735,7 @@ document.querySelector('#saved-list').addEventListener('click', event => {
   if (!button) return;
   saved = saved.filter(id => id !== button.dataset.remove);
   updateSaved();
-  showToast('Removed from saved thrones');
+  showToast('Removed from saved washrooms');
 });
 
 document.addEventListener('keydown', event => {

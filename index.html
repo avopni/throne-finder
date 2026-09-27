@@ -19,45 +19,43 @@
 
         <header class="site-header">
           <a class="brand brand--light" href="#home" aria-label="Throne Finder home">
-            <span class="brand__mark" aria-hidden="true">
-              <svg viewBox="0 0 44 44"><path d="M12 9h20v13c0 8.3-4.5 13-10 13s-10-4.7-10-13V9Z"/><path d="M8 9h28M17 35l-2 5m12-5 2 5M17 17h10"/></svg>
-            </span>
+            <span class="brand__mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M6 4h10v11H6zM5 15h21c0 6-4 10-10 10S6 21 6 16"/><path d="M15 25v3m-5 0h11M16 8h3"/></svg></span>
             <span>Throne <em>Finder</em></span>
           </a>
           <nav class="site-nav" aria-label="Main navigation">
             <button class="nav-link" data-open-planner>Plan a route</button>
-            <button class="nav-link" data-open-saved>Saved thrones <span class="saved-count">0</span></button>
+            <button class="nav-link" data-open-saved>Saved washrooms <span class="saved-count">0</span></button>
           </nav>
         </header>
 
         <div class="hero__content">
-          <div class="eyebrow"><span></span> A calmer way to get there</div>
-          <h1>Go where you need.<br /><i>Know where to go.</i></h1>
-          <p>Comfort-first routes built around mapped public washrooms — because a little certainty changes everything.</p>
+          <div class="eyebrow"><span></span> Public washroom route planning</div>
+          <h1>Know where the next<br /><i>washroom is.</i></h1>
+          <p>Plan around mapped public toilets, accessibility information, opening hours, and the time you’re comfortable travelling between stops.</p>
           <div class="hero__actions">
             <button class="primary-button primary-button--large" data-open-planner>
-              Find my route
+              Find washrooms on my route
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5"/></svg>
             </button>
             <button class="text-button" id="how-it-works">How it works <span>↓</span></button>
           </div>
         </div>
 
-        <div class="trust-card">
-          <div class="trust-card__icon">✓</div>
-          <div><strong>Community mapped</strong><span>Access, hours & amenities</span></div>
-          <div class="avatars" aria-hidden="true"><span>MK</span><span>JL</span><span>+2k</span></div>
+        <div class="trust-card washroom-card">
+          <div class="trust-card__icon" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M6 4h10v11H6zM5 15h21c0 6-4 10-10 10S6 21 6 16"/><path d="M15 25v3m-5 0h11M16 8h3"/></svg></div>
+          <div><strong>Public washrooms, mapped</strong><span>Access · hours · facilities · route time</span></div>
+          <div class="facility-code" aria-hidden="true">WC</div>
         </div>
         <div class="hero__scroll">SCROLL TO EXPLORE <span></span></div>
       </section>
 
       <section class="intro" id="about">
-        <div class="intro__label">THE RELIEF IS IN THE ROUTE</div>
-        <h2>A good day out starts with<br />knowing your <i>safe stops.</i></h2>
+        <div class="intro__label">A WASHROOM PLAN BEFORE YOU LEAVE</div>
+        <h2>Every route is easier when you know<br />where the <i>toilets are.</i></h2>
         <div class="steps">
-          <article><span>01</span><div class="step-icon">↗</div><h3>Tell us where</h3><p>Add your start and destination. Choose how far you’re comfortable going between stops.</p></article>
-          <article><span>02</span><div class="step-icon">♙</div><h3>Pick your comforts</h3><p>Filter for accessible stalls, gender neutral facilities, change tables, or staffed locations.</p></article>
-          <article><span>03</span><div class="step-icon">⌁</div><h3>Travel easier</h3><p>Follow a route with mapped washrooms placed where you might need them.</p></article>
+          <article><span>01</span><div class="step-icon"><svg viewBox="0 0 32 32"><path d="M16 28s9-8 9-16a9 9 0 1 0-18 0c0 8 9 16 9 16Z"/><circle cx="16" cy="12" r="3"/></svg></div><h3>Choose your trip</h3><p>Add a start and destination, then set your maximum comfortable time between toilets.</p></article>
+          <article><span>02</span><div class="step-icon"><svg viewBox="0 0 32 32"><path d="M6 4h10v11H6zM5 15h21c0 6-4 10-10 10S6 21 6 16"/><path d="M15 25v3m-5 0h11M16 8h3"/></svg></div><h3>Set washroom needs</h3><p>Filter for accessible toilets, public access, change tables, and permanent facilities.</p></article>
+          <article><span>03</span><div class="step-icon"><svg viewBox="0 0 32 32"><path d="M5 24c5-13 11 0 16-13"/><path d="m17 11 5-3 2 5M5 24l3-1 1 3"/></svg></div><h3>Follow the safe stops</h3><p>See every washroom, the time between toilets, and where the comfort window changes.</p></article>
         </div>
         <button class="secondary-button" data-open-planner>Chart a comfort-first route <span>→</span></button>
       </section>
@@ -66,11 +64,11 @@
         <header class="planner-header">
           <button class="icon-button planner-close" aria-label="Close route planner">×</button>
           <a class="brand" href="#home" aria-label="Throne Finder home">
-            <span class="brand__mark" aria-hidden="true"><svg viewBox="0 0 44 44"><path d="M12 9h20v13c0 8.3-4.5 13-10 13s-10-4.7-10-13V9Z"/><path d="M8 9h28M17 35l-2 5m12-5 2 5M17 17h10"/></svg></span>
+            <span class="brand__mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M6 4h10v11H6zM5 15h21c0 6-4 10-10 10S6 21 6 16"/><path d="M15 25v3m-5 0h11M16 8h3"/></svg></span>
             <span>Throne <em>Finder</em></span>
           </a>
           <div class="planner-header__actions">
-            <button class="header-pill" data-open-saved><span>♡</span> Saved <b class="saved-count">0</b></button>
+            <button class="header-pill" data-open-saved><span class="header-wc">WC</span> Saved <b class="saved-count">0</b></button>
             <button class="avatar-button" aria-label="Guest profile">G</button>
           </div>
         </header>
@@ -78,9 +76,9 @@
         <div class="planner-grid">
           <aside class="route-panel">
             <div class="route-panel__heading">
-              <div class="eyebrow eyebrow--dark"><span></span> PLAN YOUR PEACE OF MIND</div>
-              <h2>Where are you headed?</h2>
-              <p>We’ll find the most dependable stops along the way.</p>
+              <div class="eyebrow eyebrow--dark"><span></span> PUBLIC WASHROOM ROUTE PLANNER</div>
+              <h2>Plan around the next toilet.</h2>
+              <p>Choose your trip and we’ll place mapped public washrooms along the walking route.</p>
             </div>
 
             <form id="route-form">
@@ -91,8 +89,8 @@
               </div>
 
               <div class="field-group">
-                <div class="field-heading"><label for="comfort-range">Comfort range</label><output id="range-output">20 min</output></div>
-                <p>Maximum time you want to travel between washrooms.</p>
+                <div class="field-heading"><label for="comfort-range">Maximum time between toilets</label><output id="range-output">20 min</output></div>
+                <p>Your comfort timer resets at every washroom stop.</p>
                 <input type="range" id="comfort-range" min="10" max="40" step="5" value="20" />
                 <div class="range-labels"><span>10 min</span><span>40 min</span></div>
               </div>
@@ -100,27 +98,28 @@
               <div class="field-group">
                 <div class="field-heading"><span>Must-haves</span><button type="button" id="clear-filters">Clear</button></div>
                 <div class="filter-chips">
-                  <button type="button" class="chip" data-filter="accessible">♿ Accessible</button>
-                  <button type="button" class="chip active" data-filter="public">● Public access</button>
-                  <button type="button" class="chip" data-filter="changing">♙ Change table</button>
-                  <button type="button" class="chip" data-filter="building">⌂ Permanent structure</button>
+                  <button type="button" class="chip" data-filter="accessible">♿ Accessible toilet</button>
+                  <button type="button" class="chip active" data-filter="public"><b>WC</b> Public access</button>
+                  <button type="button" class="chip" data-filter="changing">▤ Change table</button>
+                  <button type="button" class="chip" data-filter="building">▣ Indoor facility</button>
                 </div>
               </div>
 
-              <button class="primary-button route-submit" type="submit"><span>Find my safest route</span><svg viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5"/></svg></button>
-              <div class="privacy-note">♙ <span>Your route stays on this device.</span></div>
+              <button class="primary-button route-submit" type="submit"><span>Find toilets &amp; plan route</span><svg viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5"/></svg></button>
+              <div class="privacy-note"><span class="privacy-lock">▣</span><span>Your washroom route stays on this device.</span></div>
             </form>
 
             <section class="itinerary" id="route-itinerary" aria-live="polite" hidden>
-              <div class="itinerary__heading"><div><span>YOUR SAFE STOPS</span><h3>Route timeline</h3></div><b id="itinerary-limit">40 min limit</b></div>
+              <div class="itinerary__heading"><div><span>YOUR WASHROOM STOPS</span><h3>Toilet timeline</h3></div><b id="itinerary-limit">40 min limit</b></div>
               <div class="comfort-legend" aria-label="Comfort range legend"><span><i class="safe"></i>Within range</span><span><i class="caution"></i>Up to 50% over</span><span><i class="danger"></i>Overdue</span></div>
               <ol class="itinerary-list" id="itinerary-list"></ol>
             </section>
           </aside>
 
           <section class="map-panel" aria-label="Route map">
+            <div class="map-restroom-key" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M6 4h10v11H6zM5 15h21c0 6-4 10-10 10S6 21 6 16"/><path d="M15 25v3m-5 0h11M16 8h3"/></svg><span><b>WC</b> PUBLIC TOILET WAYPOINT</span></div>
             <div class="map-toolbar">
-              <button class="map-mode active" data-mode="route">Route</button><button class="map-mode" data-mode="nearby">All nearby</button>
+              <button class="map-mode active" data-mode="route">Toilet route</button><button class="map-mode" data-mode="nearby">Nearby toilets</button>
             </div>
             <button class="recenter" aria-label="Recenter map">⌖</button>
             <div id="live-map" class="map-canvas"></div>
@@ -128,8 +127,8 @@
             <div class="map-source">Live washroom search · OpenStreetMap</div>
 
             <div class="route-summary" id="route-summary">
-              <div class="route-summary__top"><div><span class="live-dot"></span><b>Your comfort route</b></div><button class="summary-close" aria-label="Hide route summary">×</button></div>
-              <div class="route-stats"><div><strong id="route-time">—</strong><span>walking</span></div><div><strong id="route-stop-count">—</strong><span>live stops</span></div><div><strong id="route-distance">—</strong><span>distance</span></div></div>
+              <div class="route-summary__top"><div><span class="live-dot"></span><b>Your washroom route</b></div><button class="summary-close" aria-label="Hide route summary">×</button></div>
+              <div class="route-stats"><div><strong id="route-time">—</strong><span>walking</span></div><div><strong id="route-stop-count">—</strong><span>toilet stops</span></div><div><strong id="route-distance">—</strong><span>distance</span></div></div>
               <div class="stop-preview route-alert safe">
                 <span class="stop-number">✓</span><div><b>Comfort status</b><span>Plan a route to check the time between stops</span></div><span class="rating">READY</span>
               </div>
@@ -140,7 +139,7 @@
       </section>
 
       <aside class="saved-drawer" id="saved-drawer" aria-hidden="true">
-        <div class="drawer__header"><div><span>YOUR RELIABLE STOPS</span><h2>Saved thrones</h2></div><button class="icon-button drawer-close" aria-label="Close saved thrones">×</button></div>
+        <div class="drawer__header"><div><span>YOUR RELIABLE STOPS</span><h2>Saved washrooms</h2></div><button class="icon-button drawer-close" aria-label="Close saved washrooms">×</button></div>
         <div class="saved-list" id="saved-list"></div>
       </aside>
       <div class="drawer-backdrop"></div>
