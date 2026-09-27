@@ -5,4 +5,5 @@ dist
 .chrome-review
 *-preview.png
 desktop-final.png
+live-*.png
 .DS_Store

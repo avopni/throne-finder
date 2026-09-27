@@ -101,9 +101,9 @@
                 <div class="field-heading"><span>Must-haves</span><button type="button" id="clear-filters">Clear</button></div>
                 <div class="filter-chips">
                   <button type="button" class="chip active" data-filter="accessible">♿ Accessible</button>
-                  <button type="button" class="chip" data-filter="neutral">⚥ Gender neutral</button>
+                  <button type="button" class="chip active" data-filter="open">● Open status</button>
                   <button type="button" class="chip" data-filter="changing">♙ Change table</button>
-                  <button type="button" class="chip" data-filter="staffed">● Staffed</button>
+                  <button type="button" class="chip" data-filter="building">⌂ Permanent building</button>
                 </div>
               </div>
 
@@ -114,27 +114,16 @@
 
           <section class="map-panel" aria-label="Route map">
             <div class="map-toolbar">
-              <button class="map-mode active" data-mode="route">Route</button><button class="map-mode" data-mode="nearby">Nearby</button>
+              <button class="map-mode active" data-mode="route">Route</button><button class="map-mode" data-mode="nearby">All nearby</button>
             </div>
             <button class="recenter" aria-label="Recenter map">⌖</button>
-            <div class="map-canvas">
-              <span class="water-label">LAKE ONTARIO</span>
-              <span class="park park--one">Queen's Park</span><span class="park park--two">Moss Park</span>
-              <span class="road road--one"></span><span class="road road--two"></span><span class="road road--three"></span><span class="road road--four"></span>
-              <svg class="route-path" viewBox="0 0 900 700" preserveAspectRatio="none" aria-hidden="true">
-                <path class="route-shadow" d="M110 525 C185 445 240 490 310 410 S390 295 495 340 S620 415 720 300 S805 190 845 145"/>
-                <path class="route-stroke" d="M110 525 C185 445 240 490 310 410 S390 295 495 340 S620 415 720 300 S805 190 845 145"/>
-              </svg>
-              <button class="map-pin map-pin--start" aria-label="Starting point"><i></i></button>
-              <button class="map-pin throne-pin throne-pin--one" data-throne="0" aria-label="David Pecaut Square washroom"><span>1</span></button>
-              <button class="map-pin throne-pin throne-pin--two" data-throne="1" aria-label="Nathan Phillips Square washroom"><span>2</span></button>
-              <button class="map-pin throne-pin throne-pin--three" data-throne="2" aria-label="St. Lawrence Market washroom"><span>3</span></button>
-              <button class="map-pin map-pin--end" aria-label="Destination">◆</button>
-            </div>
+            <div id="live-map" class="map-canvas"></div>
+            <div class="map-loading" id="map-loading"><span></span><b>Finding the safest route…</b></div>
+            <div class="map-source">Live washroom data · City of Toronto</div>
 
             <div class="route-summary" id="route-summary">
               <div class="route-summary__top"><div><span class="live-dot"></span><b>Your comfort route</b></div><button class="summary-close" aria-label="Hide route summary">×</button></div>
-              <div class="route-stats"><div><strong id="route-time">34 min</strong><span>walking</span></div><div><strong>3</strong><span>trusted stops</span></div><div><strong>4.8</strong><span>avg. rating</span></div></div>
+              <div class="route-stats"><div><strong id="route-time">—</strong><span>walking</span></div><div><strong id="route-stop-count">—</strong><span>live stops</span></div><div><strong id="route-distance">—</strong><span>distance</span></div></div>
               <div class="stop-preview">
                 <span class="stop-number">1</span><div><b>David Pecaut Square</b><span>8 min away · Open until 10 PM</span></div><span class="rating">★ 4.9</span>
               </div>
