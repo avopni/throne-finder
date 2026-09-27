@@ -110,6 +110,12 @@
               <button class="primary-button route-submit" type="submit"><span>Find my safest route</span><svg viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5"/></svg></button>
               <div class="privacy-note">♙ <span>Your route stays on this device.</span></div>
             </form>
+
+            <section class="itinerary" id="route-itinerary" aria-live="polite" hidden>
+              <div class="itinerary__heading"><div><span>YOUR SAFE STOPS</span><h3>Route timeline</h3></div><b id="itinerary-limit">40 min limit</b></div>
+              <div class="comfort-legend" aria-label="Comfort range legend"><span><i class="safe"></i>Within range</span><span><i class="caution"></i>Up to 50% over</span><span><i class="danger"></i>Overdue</span></div>
+              <ol class="itinerary-list" id="itinerary-list"></ol>
+            </section>
           </aside>
 
           <section class="map-panel" aria-label="Route map">
@@ -124,8 +130,8 @@
             <div class="route-summary" id="route-summary">
               <div class="route-summary__top"><div><span class="live-dot"></span><b>Your comfort route</b></div><button class="summary-close" aria-label="Hide route summary">×</button></div>
               <div class="route-stats"><div><strong id="route-time">—</strong><span>walking</span></div><div><strong id="route-stop-count">—</strong><span>live stops</span></div><div><strong id="route-distance">—</strong><span>distance</span></div></div>
-              <div class="stop-preview">
-                <span class="stop-number">1</span><div><b>Route washroom</b><span>Live route data will appear here</span></div><span class="rating">OSM DATA</span>
+              <div class="stop-preview route-alert safe">
+                <span class="stop-number">✓</span><div><b>Comfort status</b><span>Plan a route to check the time between stops</span></div><span class="rating">READY</span>
               </div>
               <button class="start-route" id="start-route"><span>Start route</span><span>→</span></button>
             </div>

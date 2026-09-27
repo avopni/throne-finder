@@ -12,6 +12,8 @@ A static, privacy-friendly route planner for finding public washrooms along a tr
 - An OpenStreetMap North America amenities mirror as a fallback when public Overpass servers are busy
 - Google Maps universal directions links for starting navigation
 
+Each planned leg resets the selected comfort timer at a washroom. Route sections are green within the chosen time, yellow until 50% beyond it, and red after that. The route timeline lists every stop with its ETA, the elapsed walking time from the previous stop, and the estimated time to the next stop.
+
 Washrooms are queried dynamically for the requested route or the current visible map area, so there is no city boundary or bundled facility list. The public endpoints are appropriate for a demonstration and light traffic. A larger production launch should use hosted geocoding, routing, and OpenStreetMap query services with service guarantees.
 
 ## Run locally

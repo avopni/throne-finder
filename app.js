@@ -295,11 +295,74 @@ async function getWalkingRoute(points) {
   if (!response.ok) throw new Error('Walking directions are unavailable right now.');
   const data = await response.json();
   if (!data.trip?.legs?.length) throw new Error('No walkable route was found.');
-  const coordinates = data.trip.legs.flatMap((leg, index) => {
-    const decoded = decodePolyline(leg.shape);
-    return index ? decoded.slice(1) : decoded;
+  const legs = data.trip.legs.map(leg => ({
+    coordinates: decodePolyline(leg.shape),
+    time: Number(leg.summary.time),
+    distance: Number(leg.summary.length),
+  }));
+  const coordinates = legs.flatMap((leg, index) => index ? leg.coordinates.slice(1) : leg.coordinates);
+  return { coordinates, legs, time: data.trip.summary.time, distance: data.trip.summary.length };
+}
+
+function comfortMinutes() {
+  return Number(document.querySelector('#comfort-range').value);
+}
+
+function comfortStatus(seconds) {
+  const limit = comfortMinutes() * 60;
+  if (seconds <= limit) return 'safe';
+  if (seconds <= limit * 1.5) return 'caution';
+  return 'danger';
+}
+
+function routePointDistance(a, b) {
+  return haversine({ lat: a[0], lng: a[1] }, { lat: b[0], lng: b[1] });
+}
+
+function slicePolyline(coordinates, startRatio, endRatio) {
+  if (coordinates.length < 2 || endRatio <= startRatio) return [];
+  const cumulative = [0];
+  for (let index = 1; index < coordinates.length; index++) cumulative.push(cumulative[index - 1] + routePointDistance(coordinates[index - 1], coordinates[index]));
+  const total = cumulative[cumulative.length - 1];
+  if (!total) return coordinates;
+  const startDistance = total * startRatio;
+  const endDistance = total * endRatio;
+  const pointAt = distance => {
+    let index = 1;
+    while (index < cumulative.length && cumulative[index] < distance) index++;
+    if (index >= coordinates.length) return coordinates[coordinates.length - 1];
+    const segmentLength = cumulative[index] - cumulative[index - 1];
+    const ratio = segmentLength ? (distance - cumulative[index - 1]) / segmentLength : 0;
+    return [
+      coordinates[index - 1][0] + (coordinates[index][0] - coordinates[index - 1][0]) * ratio,
+      coordinates[index - 1][1] + (coordinates[index][1] - coordinates[index - 1][1]) * ratio,
+    ];
+  };
+  const sliced = [pointAt(startDistance)];
+  for (let index = 1; index < coordinates.length - 1; index++) {
+    if (cumulative[index] > startDistance && cumulative[index] < endDistance) sliced.push(coordinates[index]);
+  }
+  sliced.push(pointAt(endDistance));
+  return sliced;
+}
+
+function drawComfortRoute(route) {
+  if (routeLayer) map.removeLayer(routeLayer);
+  routeLayer = L.featureGroup().addTo(map);
+  L.polyline(route.coordinates, { color: '#fffefa', weight: 11, opacity: .94, lineCap: 'round', lineJoin: 'round' }).addTo(routeLayer);
+  const limit = comfortMinutes() * 60;
+  const colors = { safe: '#3c8f5a', caution: '#e4a72f', danger: '#cf4a3f' };
+  route.legs.forEach(leg => {
+    const boundaries = [
+      { status: 'safe', start: 0, end: Math.min(leg.time, limit) },
+      { status: 'caution', start: Math.min(leg.time, limit), end: Math.min(leg.time, limit * 1.5) },
+      { status: 'danger', start: Math.min(leg.time, limit * 1.5), end: leg.time },
+    ];
+    boundaries.filter(part => part.end > part.start).forEach(part => {
+      const coordinates = slicePolyline(leg.coordinates, part.start / leg.time, part.end / leg.time);
+      if (coordinates.length > 1) L.polyline(coordinates, { color: colors[part.status], weight: 6, opacity: .98, lineCap: 'round', lineJoin: 'round' }).addTo(routeLayer);
+    });
   });
-  return { coordinates, time: data.trip.summary.time, distance: data.trip.summary.length };
 }
 
 function photonFeatureToLocation(feature) {
@@ -476,17 +539,62 @@ function renderEndpoints() {
   if (userMarker) userMarker.addTo(endpointLayer);
 }
 
+function roundedMinutes(seconds) {
+  return Math.max(1, Math.round(seconds / 60));
+}
+
+function renderItinerary(route, stops) {
+  const itinerary = document.querySelector('#route-itinerary');
+  const list = document.querySelector('#itinerary-list');
+  const limit = comfortMinutes();
+  const statusLabels = { safe: 'SAFE', caution: 'CAUTION', danger: 'OVERDUE' };
+  const statusColors = { safe: '#3c8f5a', caution: '#e4a72f', danger: '#cf4a3f' };
+  const waypoints = [
+    { ...startCoords, name: startCoords.title || startCoords.label.split(',')[0], kind: 'start' },
+    ...stops.map(stop => ({ ...stop, kind: 'washroom' })),
+    { ...endCoords, name: endCoords.title || endCoords.label.split(',')[0], kind: 'destination' },
+  ];
+  let elapsed = 0;
+  list.innerHTML = waypoints.map((point, index) => {
+    const incoming = index ? route.legs[index - 1] : null;
+    const next = route.legs[index];
+    if (incoming) elapsed += incoming.time;
+    const arrivalStatus = incoming ? comfortStatus(incoming.time) : 'safe';
+    const nextStatus = next ? comfortStatus(next.time) : arrivalStatus;
+    const badge = index === 0 ? 'START' : statusLabels[arrivalStatus];
+    const marker = index === 0 ? 'S' : index === waypoints.length - 1 ? '◆' : String(index);
+    const timing = index === 0 ? 'Depart now' : `ETA ${roundedMinutes(elapsed)} min · ${roundedMinutes(incoming.time)} min since last stop`;
+    let nextText = '';
+    if (next) {
+      const nextName = index === waypoints.length - 2 ? 'destination' : 'next washroom';
+      nextText = `${nextName.charAt(0).toUpperCase() + nextName.slice(1)} in ${roundedMinutes(next.time)} min`;
+      if (next.time > limit * 60) nextText += ` · ${roundedMinutes(next.time - limit * 60)} min over limit`;
+    }
+    return `<li class="itinerary-stop ${arrivalStatus} ${point.kind}" style="--next-color:${statusColors[nextStatus]}"><span class="itinerary-stop__marker">${marker}</span><div class="itinerary-stop__copy"><button type="button" data-itinerary-index="${index}" data-lat="${point.lat}" data-lng="${point.lng}"${point.id ? ` data-facility-id="${escapeHtml(point.id)}"` : ''}>${escapeHtml(point.name)}</button><span>${timing}</span>${nextText ? `<small>${nextText}</small>` : ''}</div><b class="itinerary-stop__badge">${badge}</b></li>`;
+  }).join('');
+  document.querySelector('#itinerary-limit').textContent = `${limit} min limit`;
+  itinerary.hidden = false;
+}
+
 function updateSummary(route, stops) {
   document.querySelector('#route-time').textContent = `${Math.max(1, Math.round(route.time / 60))} min`;
   document.querySelector('#route-stop-count').textContent = String(stops.length);
   document.querySelector('#route-distance').textContent = `${route.distance.toFixed(1)} km`;
   const preview = document.querySelector('.stop-preview');
-  if (stops.length) {
-    const first = stops[0];
-    preview.innerHTML = `<span class="stop-number">1</span><div><b>${escapeHtml(first.name)}</b><span>${Math.max(1, Math.round(route.time / 60 * first.progress))} min along route · ${escapeHtml(statusText(first))}</span></div><span class="rating">OSM DATA</span>`;
+  const limit = comfortMinutes();
+  const worstLeg = route.legs.reduce((worst, leg) => leg.time > worst.time ? leg : worst, route.legs[0]);
+  const severity = comfortStatus(worstLeg.time);
+  const longest = Math.max(1, Math.ceil(worstLeg.time / 60));
+  const overdue = Math.max(1, Math.ceil((worstLeg.time - limit * 60) / 60));
+  preview.className = `stop-preview route-alert ${severity}`;
+  if (severity === 'safe') {
+    preview.innerHTML = `<span class="stop-number">✓</span><div><b>Every stop is within your ${limit} min range</b><span>Longest stretch between safe stops: ${longest} min</span></div><span class="rating">SAFE</span>`;
+  } else if (severity === 'caution') {
+    preview.innerHTML = `<span class="stop-number">!</span><div><b>A stretch enters the caution zone</b><span>Longest stretch: ${longest} min · ${overdue} min over your range</span></div><span class="rating">CAUTION</span>`;
   } else {
-    preview.innerHTML = '<span class="stop-number">!</span><div><b>No matching facilities on this route</b><span>Try clearing one or more must-have filters.</span></div><span class="rating">LIVE</span>';
+    preview.innerHTML = `<span class="stop-number">!</span><div><b>Warning: a stretch exceeds the safe window</b><span>Longest stretch: ${longest} min · ${overdue} min over your range</span></div><span class="rating">OVERDUE</span>`;
   }
+  renderItinerary(route, stops);
   document.querySelector('#route-summary').classList.add('ready');
   document.querySelector('#route-summary').classList.remove('hidden');
 }
@@ -505,8 +613,7 @@ async function planRoute() {
     currentRoute = finalRoute;
     currentRouteStops = stops;
 
-    if (routeLayer) map.removeLayer(routeLayer);
-    routeLayer = L.polyline(finalRoute.coordinates, { color: '#e86f43', weight: 6, opacity: .95, lineCap: 'round', lineJoin: 'round' }).addTo(map);
+    drawComfortRoute(finalRoute);
     renderEndpoints();
     if (currentMode === 'route') renderRouteMarkers(stops); else renderNearbyMarkers();
     map.fitBounds(routeLayer.getBounds(), { padding: [55, 55] });
@@ -528,7 +635,13 @@ document.querySelectorAll('[data-open-saved]').forEach(button => button.addEvent
 document.querySelector('.drawer-close').addEventListener('click', closeDrawer);
 backdrop.addEventListener('click', closeDrawer);
 
-document.querySelector('#comfort-range').addEventListener('input', event => document.querySelector('#range-output').textContent = `${event.target.value} min`);
+document.querySelector('#comfort-range').addEventListener('input', event => {
+  document.querySelector('#range-output').textContent = `${event.target.value} min`;
+  if (currentRoute) {
+    drawComfortRoute(currentRoute);
+    updateSummary(currentRoute, currentRouteStops);
+  }
+});
 document.querySelectorAll('.chip').forEach(chip => chip.addEventListener('click', () => chip.classList.toggle('active')));
 document.querySelector('#clear-filters').addEventListener('click', () => document.querySelectorAll('.chip').forEach(chip => chip.classList.remove('active')));
 
@@ -554,6 +667,12 @@ document.querySelector('#locate-button').addEventListener('click', () => {
 setupAutocomplete(startInput);
 setupAutocomplete(endInput);
 document.querySelector('#route-form').addEventListener('submit', event => { event.preventDefault(); planRoute(); });
+document.querySelector('#itinerary-list').addEventListener('click', event => {
+  const waypoint = event.target.closest('[data-itinerary-index]');
+  if (!waypoint) return;
+  map.flyTo([Number(waypoint.dataset.lat), Number(waypoint.dataset.lng)], Math.max(map.getZoom(), 16));
+  if (waypoint.dataset.facilityId) openDetail(waypoint.dataset.facilityId);
+});
 
 document.querySelectorAll('.map-mode').forEach(button => button.addEventListener('click', async () => {
   document.querySelectorAll('.map-mode').forEach(item => item.classList.remove('active'));

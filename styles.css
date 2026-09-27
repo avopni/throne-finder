@@ -122,6 +122,28 @@ input[type="range"] { width: 100%; accent-color: var(--coral); }
 .route-submit { width: 100%; height: 50px; margin-top: 27px; padding: 0 18px 0 23px; display: flex; align-items: center; justify-content: space-between; font-size: 12px; }
 .route-submit:disabled { opacity: .55; cursor: not-allowed; }
 .privacy-note { display: flex; justify-content: center; gap: 7px; margin-top: 12px; color: #a0a19a; font-size: 8px; }
+.itinerary { margin-top: 28px; padding-top: 24px; border-top: 1px solid #e7e5de; }
+.itinerary[hidden] { display: none; }
+.itinerary__heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.itinerary__heading span { color: var(--coral); font-size: 8px; font-weight: 800; letter-spacing: 1.4px; }
+.itinerary__heading h3 { margin: 5px 0 0; font: 27px "DM Serif Display", serif; }
+.itinerary__heading > b { padding: 6px 9px; border-radius: 999px; background: #eef4ef; color: #34734b; font-size: 9px; white-space: nowrap; }
+.comfort-legend { display: flex; flex-wrap: wrap; gap: 9px 13px; margin: 15px 0 17px; color: #777b75; font-size: 8px; font-weight: 700; }
+.comfort-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.comfort-legend i { width: 8px; height: 8px; border-radius: 50%; }
+.comfort-legend .safe { background: #3c8f5a; }.comfort-legend .caution { background: #e4a72f; }.comfort-legend .danger { background: #cf4a3f; }
+.itinerary-list { margin: 0; padding: 0; list-style: none; }
+.itinerary-stop { position: relative; display: grid; grid-template-columns: 31px minmax(0, 1fr) auto; gap: 9px; padding: 0 0 18px; }
+.itinerary-stop:not(:last-child)::after { content: ""; position: absolute; left: 14px; top: 31px; bottom: 3px; width: 2px; background: var(--next-color, #3c8f5a); }
+.itinerary-stop__marker { position: relative; z-index: 1; display: grid; place-items: center; width: 30px; height: 30px; border: 2px solid white; border-radius: 50%; background: var(--status-color, #3c8f5a); box-shadow: 0 2px 8px rgba(25,39,33,.18); color: white; font-size: 9px; font-weight: 800; }
+.itinerary-stop.destination .itinerary-stop__marker { border-radius: 7px; }
+.itinerary-stop__copy { min-width: 0; padding-top: 1px; }
+.itinerary-stop__copy button { max-width: 100%; overflow: hidden; padding: 0; border: 0; background: transparent; color: var(--ink); font-size: 11px; font-weight: 800; text-align: left; text-overflow: ellipsis; white-space: nowrap; }
+.itinerary-stop__copy button:hover { color: var(--coral-dark); }
+.itinerary-stop__copy span, .itinerary-stop__copy small { display: block; margin-top: 3px; color: #858982; font-size: 8px; line-height: 1.4; }
+.itinerary-stop__copy small { color: var(--next-color, #3c8f5a); font-weight: 800; }
+.itinerary-stop__badge { margin-top: 3px; color: var(--status-color, #3c8f5a); font-size: 8px; font-weight: 900; letter-spacing: .5px; }
+.itinerary-stop.safe { --status-color: #3c8f5a; }.itinerary-stop.caution { --status-color: #d9941e; }.itinerary-stop.danger { --status-color: #cf4a3f; }
 
 .map-panel { position: relative; isolation: isolate; overflow: hidden; background: #eae8df; }
 .map-canvas { position: absolute; z-index: 0; inset: 0; overflow: hidden; background: #eae8df; }
@@ -179,6 +201,9 @@ input[type="range"] { width: 100%; accent-color: var(--coral); }
 .stop-preview { display: flex; align-items: center; gap: 10px; }
 .stop-number { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: #fff0e9; color: var(--coral); font-size: 10px; font-weight: 800; }
 .stop-preview div { flex: 1; }.stop-preview b, .stop-preview div span { display: block; }.stop-preview b { font-size: 10px; }.stop-preview div span { margin-top: 3px; color: #989a93; font-size: 8px; }.rating { color: var(--coral); font-size: 9px; font-weight: 800; }
+.route-alert.safe .stop-number { background: #e9f4ec; color: #34734b; }.route-alert.safe .rating { color: #34734b; }
+.route-alert.caution .stop-number { background: #fff3d8; color: #a56c08; }.route-alert.caution .rating { color: #a56c08; }
+.route-alert.danger .stop-number { background: #fde8e5; color: #b63831; }.route-alert.danger .rating { color: #b63831; }
 .start-route { width: 100%; height: 42px; margin-top: 13px; padding: 0 17px; display: flex; justify-content: space-between; align-items: center; border: 0; border-radius: 999px; background: var(--green); color: white; font-size: 11px; font-weight: 800; }
 
 .saved-drawer { position: fixed; z-index: 40; top: 0; right: 0; bottom: 0; width: min(430px, 92vw); padding: 28px; background: var(--paper); box-shadow: -20px 0 60px rgba(24,38,32,.18); transform: translateX(105%); transition: transform .35s ease; }
