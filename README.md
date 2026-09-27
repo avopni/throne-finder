@@ -6,7 +6,7 @@ A static, privacy-friendly route planner for finding public washrooms along a tr
 
 - Leaflet with OpenStreetMap map tiles
 - Browser Geolocation API for the starting point
-- Nominatim for user-submitted Canadian address searches
+- Photon for search-as-you-type place and address suggestions, biased toward the visible map area
 - Valhalla for pedestrian routes
 - OpenStreetMap/Overpass for route-area washroom queries, including available access, hours, fee, accessibility, and change-table tags
 - An OpenStreetMap North America amenities mirror as a fallback when public Overpass servers are busy

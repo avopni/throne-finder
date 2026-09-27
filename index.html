@@ -86,8 +86,8 @@
             <form id="route-form">
               <div class="route-inputs">
                 <div class="route-line" aria-hidden="true"><i></i><span></span><b></b></div>
-                <label><span>STARTING FROM</span><input id="start-input" value="Victoria Park, Kitchener" autocomplete="off" /><button type="button" id="locate-button" aria-label="Use my location">⌖</button></label>
-                <label><span>GOING TO</span><input id="end-input" value="Waterloo Public Square" autocomplete="off" /></label>
+                <label class="location-field is-selected"><span>STARTING FROM</span><input id="start-input" value="Victoria Park, Kitchener" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="start-suggestions" /><small class="location-status" aria-live="polite">✓ Location selected</small><div class="location-suggestions" id="start-suggestions" role="listbox" aria-label="Starting location suggestions"></div><button type="button" id="locate-button" aria-label="Use my location">⌖</button></label>
+                <label class="location-field is-selected"><span>GOING TO</span><input id="end-input" value="Waterloo Public Square" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="end-suggestions" /><small class="location-status" aria-live="polite">✓ Location selected</small><div class="location-suggestions" id="end-suggestions" role="listbox" aria-label="Destination suggestions"></div></label>
               </div>
 
               <div class="field-group">

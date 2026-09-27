@@ -6,7 +6,7 @@ const OVERPASS_ENDPOINTS = [
   'https://overpass.private.coffee/api/interpreter',
 ];
 const OSM_AMENITIES = 'https://services6.arcgis.com/Do88DoK2xjTUCXd1/arcgis/rest/services/OSM_Amenities_NA/FeatureServer/0/query';
-const NOMINATIM = 'https://nominatim.openstreetmap.org/search';
+const PHOTON = 'https://photon.komoot.io/api/';
 const VALHALLA = 'https://valhalla1.openstreetmap.de/route';
 const DEFAULT_START = { lat: 43.4474, lng: -80.4937, label: 'Victoria Park, Kitchener' };
 const DEFAULT_END = { lat: 43.4644, lng: -80.5222, label: 'Waterloo Public Square' };
@@ -19,6 +19,7 @@ const toast = document.querySelector('.toast');
 const loading = document.querySelector('#map-loading');
 const startInput = document.querySelector('#start-input');
 const endInput = document.querySelector('#end-input');
+const autocompleteState = new Map();
 
 let facilities = [];
 let thrones = [];
@@ -68,7 +69,7 @@ function showToast(message) {
 function setLoading(isLoading, message = 'Finding the safest route…') {
   loading.querySelector('b').textContent = message;
   loading.classList.toggle('show', isLoading);
-  document.querySelector('.route-submit').disabled = isLoading;
+  document.querySelector('.route-submit').disabled = isLoading || !startCoords || !endCoords;
 }
 
 function escapeHtml(value = '') {
@@ -301,16 +302,156 @@ async function getWalkingRoute(points) {
   return { coordinates, time: data.trip.summary.time, distance: data.trip.summary.length };
 }
 
-async function geocode(value) {
-  const normalized = value.trim().toLowerCase();
-  if (/victoria park.*kitchener/.test(normalized)) return { ...DEFAULT_START };
-  if (/waterloo public square/.test(normalized)) return { ...DEFAULT_END };
-  const params = new URLSearchParams({ q: `${value}, Ontario, Canada`, format: 'jsonv2', limit: '1', countrycodes: 'ca' });
-  const response = await fetch(`${NOMINATIM}?${params}`);
-  if (!response.ok) throw new Error(`Could not look up “${value}”.`);
-  const results = await response.json();
-  if (!results.length) throw new Error(`Could not find “${value}”. Try a more specific address.`);
-  return { lat: Number(results[0].lat), lng: Number(results[0].lon), label: results[0].display_name };
+function photonFeatureToLocation(feature) {
+  const properties = feature.properties || {};
+  const [lng, lat] = feature.geometry.coordinates;
+  const streetAddress = [properties.housenumber, properties.street].filter(Boolean).join(' ');
+  const name = properties.name || streetAddress || properties.city || properties.county || 'Selected location';
+  const area = properties.city || properties.town || properties.village || properties.county;
+  const labelParts = [name];
+  if (streetAddress && streetAddress.toLowerCase() !== name.toLowerCase()) labelParts.push(streetAddress);
+  [area, properties.state, properties.country].filter(Boolean).forEach(part => {
+    if (!labelParts.some(existing => existing.toLowerCase() === String(part).toLowerCase())) labelParts.push(part);
+  });
+  return {
+    lat: Number(lat),
+    lng: Number(lng),
+    label: labelParts.join(', '),
+    title: name,
+    subtitle: labelParts.slice(1).join(', '),
+  };
+}
+
+async function searchLocations(value, signal, limit = 6) {
+  const center = map.getCenter();
+  const params = new URLSearchParams({
+    q: value.trim(),
+    limit: String(limit),
+    lang: 'en',
+    lat: String(center.lat),
+    lon: String(center.lng),
+    location_bias_scale: '0.35',
+  });
+  const response = await fetch(`${PHOTON}?${params}`, { signal });
+  if (!response.ok) throw new Error('Location suggestions are unavailable right now.');
+  const data = await response.json();
+  return (data.features || []).map(photonFeatureToLocation).filter(item => Number.isFinite(item.lat) && Number.isFinite(item.lng));
+}
+
+function setLocationForInput(input, location) {
+  const selected = { ...location, inputValue: location.label };
+  if (input === startInput) startCoords = selected;
+  else endCoords = selected;
+  input.value = location.label;
+  const field = input.closest('.location-field');
+  field.classList.add('is-selected');
+  field.querySelector('.location-status').textContent = '✓ Location selected';
+  input.setAttribute('aria-expanded', 'false');
+  input.removeAttribute('aria-activedescendant');
+  const state = autocompleteState.get(input);
+  if (state) {
+    state.menu.classList.remove('open');
+    state.activeIndex = -1;
+  }
+  document.querySelector('.route-submit').disabled = !startCoords || !endCoords;
+}
+
+function setupAutocomplete(input) {
+  const field = input.closest('.location-field');
+  const menu = field.querySelector('.location-suggestions');
+  const status = field.querySelector('.location-status');
+  const state = { menu, results: [], activeIndex: -1, timer: null, controller: null };
+  autocompleteState.set(input, state);
+
+  const close = () => {
+    menu.classList.remove('open');
+    input.setAttribute('aria-expanded', 'false');
+    input.removeAttribute('aria-activedescendant');
+    state.activeIndex = -1;
+  };
+
+  const updateActiveOption = () => {
+    menu.querySelectorAll('.location-option').forEach((option, index) => {
+      const isActive = index === state.activeIndex;
+      option.classList.toggle('active', isActive);
+      option.setAttribute('aria-selected', String(isActive));
+    });
+    if (state.activeIndex >= 0) {
+      const active = menu.querySelectorAll('.location-option')[state.activeIndex];
+      input.setAttribute('aria-activedescendant', active.id);
+      active.scrollIntoView({ block: 'nearest' });
+    } else input.removeAttribute('aria-activedescendant');
+  };
+
+  const select = index => {
+    const location = state.results[index];
+    if (location) setLocationForInput(input, location);
+  };
+
+  const render = (results, message = '') => {
+    state.results = results;
+    state.activeIndex = -1;
+    if (message) menu.innerHTML = `<div class="location-suggestions__message">${escapeHtml(message)}</div>`;
+    else menu.innerHTML = results.map((item, index) => `<button type="button" class="location-option" id="${menu.id}-option-${index}" role="option" aria-selected="false" data-location-index="${index}"><span class="location-option__pin">⌖</span><span><b>${escapeHtml(item.title)}</b><em>${escapeHtml(item.subtitle || 'Mapped location')}</em></span></button>`).join('');
+    menu.classList.add('open');
+    input.setAttribute('aria-expanded', 'true');
+  };
+
+  input.addEventListener('input', () => {
+    if (input === startInput) startCoords = null;
+    else endCoords = null;
+    document.querySelector('.route-submit').disabled = true;
+    field.classList.remove('is-selected');
+    status.textContent = input.value.trim().length < 3 ? 'Type at least 3 characters' : 'Choose a suggestion';
+    clearTimeout(state.timer);
+    state.controller?.abort();
+    if (input.value.trim().length < 3) { close(); return; }
+    state.timer = setTimeout(async () => {
+      state.controller = new AbortController();
+      render([], 'Searching locations…');
+      try {
+        const results = await searchLocations(input.value, state.controller.signal);
+        render(results, results.length ? '' : 'No matching locations found. Try adding a city or postal code.');
+      } catch (error) {
+        if (error.name !== 'AbortError') render([], error.message);
+      }
+    }, 350);
+  });
+
+  input.addEventListener('focus', () => {
+    if (state.results.length && !field.classList.contains('is-selected')) {
+      menu.classList.add('open');
+      input.setAttribute('aria-expanded', 'true');
+    }
+  });
+
+  input.addEventListener('keydown', event => {
+    if (!menu.classList.contains('open') || !state.results.length) {
+      if (event.key === 'Escape') close();
+      return;
+    }
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      state.activeIndex = (state.activeIndex + 1) % state.results.length;
+      updateActiveOption();
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      state.activeIndex = (state.activeIndex - 1 + state.results.length) % state.results.length;
+      updateActiveOption();
+    } else if (event.key === 'Enter') {
+      event.preventDefault();
+      select(state.activeIndex >= 0 ? state.activeIndex : 0);
+    } else if (event.key === 'Escape') close();
+  });
+
+  menu.addEventListener('mousedown', event => {
+    const option = event.target.closest('[data-location-index]');
+    if (!option) return;
+    event.preventDefault();
+    select(Number(option.dataset.locationIndex));
+    input.focus();
+  });
+  input.addEventListener('blur', () => setTimeout(close, 160));
 }
 
 function renderRouteMarkers(stops) {
@@ -330,8 +471,8 @@ function renderNearbyMarkers() {
 
 function renderEndpoints() {
   endpointLayer.clearLayers();
-  L.marker([startCoords.lat, startCoords.lng], { icon: icon('endpoint-pin'), title: 'Route start' }).addTo(endpointLayer);
-  L.marker([endCoords.lat, endCoords.lng], { icon: icon('endpoint-pin endpoint-pin--end'), title: 'Destination' }).addTo(endpointLayer);
+  if (startCoords) L.marker([startCoords.lat, startCoords.lng], { icon: icon('endpoint-pin'), title: 'Route start' }).addTo(endpointLayer);
+  if (endCoords) L.marker([endCoords.lat, endCoords.lng], { icon: icon('endpoint-pin endpoint-pin--end'), title: 'Destination' }).addTo(endpointLayer);
   if (userMarker) userMarker.addTo(endpointLayer);
 }
 
@@ -351,19 +492,12 @@ function updateSummary(route, stops) {
 }
 
 async function planRoute() {
+  if (!startCoords || !endCoords) {
+    showToast('Choose both locations from the suggestions first.');
+    return;
+  }
   setLoading(true);
   try {
-    const startNeedsLookup = !startCoords || startInput.value.trim() !== startCoords.inputValue;
-    const endNeedsLookup = !endCoords || endInput.value.trim() !== endCoords.inputValue;
-    if (startNeedsLookup) {
-      startCoords = await geocode(startInput.value);
-      startCoords.inputValue = startInput.value.trim();
-    }
-    if (endNeedsLookup) {
-      if (startNeedsLookup && !/victoria park.*kitchener/i.test(startInput.value)) await new Promise(resolve => setTimeout(resolve, 1100));
-      endCoords = await geocode(endInput.value);
-      endCoords.inputValue = endInput.value.trim();
-    }
     const directRoute = await getWalkingRoute([startCoords, endCoords]);
     await loadFacilitiesForBounds(routeBounds(directRoute.coordinates));
     const stops = chooseRouteStops(directRoute.coordinates);
@@ -400,23 +534,25 @@ document.querySelector('#clear-filters').addEventListener('click', () => documen
 
 document.querySelector('#locate-button').addEventListener('click', () => {
   startInput.value = 'Finding your location…';
+  startCoords = null;
+  startInput.closest('.location-field').classList.remove('is-selected');
+  startInput.closest('.location-field').querySelector('.location-status').textContent = 'Waiting for browser location permission';
+  document.querySelector('.route-submit').disabled = true;
   if (!navigator.geolocation) { startInput.value = 'Current location unavailable'; showToast('Location is not available in this browser'); return; }
   navigator.geolocation.getCurrentPosition(position => {
-    startCoords = { lat: position.coords.latitude, lng: position.coords.longitude, label: 'Current location', inputValue: 'Current location' };
-    startInput.value = 'Current location';
+    setLocationForInput(startInput, { lat: position.coords.latitude, lng: position.coords.longitude, label: 'Current location' });
     if (userMarker) map.removeLayer(userMarker);
     userMarker = L.marker([startCoords.lat, startCoords.lng], { icon: icon('user-pin'), title: 'Your location' }).addTo(map);
     map.setView([startCoords.lat, startCoords.lng], 15);
     showToast('Current location added');
   }, () => {
-    startInput.value = DEFAULT_START.label;
-    startCoords = { ...DEFAULT_START, inputValue: DEFAULT_START.label };
+    setLocationForInput(startInput, DEFAULT_START);
     showToast('We could not access your location. Enter an address instead.');
   }, { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 });
 });
 
-startInput.addEventListener('input', () => { if (startInput.value !== startCoords?.inputValue) startCoords = null; });
-endInput.addEventListener('input', () => { if (endInput.value !== endCoords?.inputValue) endCoords = null; });
+setupAutocomplete(startInput);
+setupAutocomplete(endInput);
 document.querySelector('#route-form').addEventListener('submit', event => { event.preventDefault(); planRoute(); });
 
 document.querySelectorAll('.map-mode').forEach(button => button.addEventListener('click', async () => {
@@ -448,8 +584,7 @@ map.on('moveend', () => {
   }, 700);
 });
 map.on('click', event => {
-  endCoords = { lat: event.latlng.lat, lng: event.latlng.lng, label: 'Dropped pin', inputValue: 'Dropped pin' };
-  endInput.value = 'Dropped pin';
+  setLocationForInput(endInput, { lat: event.latlng.lat, lng: event.latlng.lng, label: 'Dropped pin' });
   renderEndpoints();
   showToast('Destination pin placed');
 });
