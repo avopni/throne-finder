@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#243d32" />
+    <meta name="description" content="Throne Finder plans calmer routes around reliable public washrooms." />
+    <title>Throne Finder — Go with confidence</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main id="app">
+      <section class="hero" id="home" aria-label="Throne Finder home">
+        <img class="hero__image" src="./assets/throne-finder-hero.png" alt="A public washroom pavilion beside a winding Toronto waterfront path" />
+        <div class="hero__scrim"></div>
+
+        <header class="site-header">
+          <a class="brand brand--light" href="#home" aria-label="Throne Finder home">
+            <span class="brand__mark" aria-hidden="true">
+              <svg viewBox="0 0 44 44"><path d="M12 9h20v13c0 8.3-4.5 13-10 13s-10-4.7-10-13V9Z"/><path d="M8 9h28M17 35l-2 5m12-5 2 5M17 17h10"/></svg>
+            </span>
+            <span>Throne <em>Finder</em></span>
+          </a>
+          <nav class="site-nav" aria-label="Main navigation">
+            <button class="nav-link" data-open-planner>Plan a route</button>
+            <button class="nav-link" data-open-saved>Saved thrones <span class="saved-count">0</span></button>
+          </nav>
+        </header>
+
+        <div class="hero__content">
+          <div class="eyebrow"><span></span> A calmer way to get there</div>
+          <h1>Go where you need.<br /><i>Know where to go.</i></h1>
+          <p>Comfort-first routes built around clean, reliable public washrooms — because a little certainty changes everything.</p>
+          <div class="hero__actions">
+            <button class="primary-button primary-button--large" data-open-planner>
+              Find my route
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5"/></svg>
+            </button>
+            <button class="text-button" id="how-it-works">How it works <span>↓</span></button>
+          </div>
+        </div>
+
+        <div class="trust-card">
+          <div class="trust-card__icon">✓</div>
+          <div><strong>Community checked</strong><span>Hours, access & cleanliness</span></div>
+          <div class="avatars" aria-hidden="true"><span>MK</span><span>JL</span><span>+2k</span></div>
+        </div>
+        <div class="hero__scroll">SCROLL TO EXPLORE <span></span></div>
+      </section>
+
+      <section class="intro" id="about">
+        <div class="intro__label">THE RELIEF IS IN THE ROUTE</div>
+        <h2>A good day out starts with<br />knowing your <i>safe stops.</i></h2>
+        <div class="steps">
+          <article><span>01</span><div class="step-icon">↗</div><h3>Tell us where</h3><p>Add your start and destination. Choose how far you’re comfortable going between stops.</p></article>
+          <article><span>02</span><div class="step-icon">♙</div><h3>Pick your comforts</h3><p>Filter for accessible stalls, gender neutral facilities, change tables, or staffed locations.</p></article>
+          <article><span>03</span><div class="step-icon">⌁</div><h3>Travel easier</h3><p>Follow a route with trusted washrooms placed exactly where you might need them.</p></article>
+        </div>
+        <button class="secondary-button" data-open-planner>Chart a comfort-first route <span>→</span></button>
+      </section>
+
+      <section class="planner" id="planner" aria-hidden="true">
+        <header class="planner-header">
+          <button class="icon-button planner-close" aria-label="Close route planner">×</button>
+          <a class="brand" href="#home" aria-label="Throne Finder home">
+            <span class="brand__mark" aria-hidden="true"><svg viewBox="0 0 44 44"><path d="M12 9h20v13c0 8.3-4.5 13-10 13s-10-4.7-10-13V9Z"/><path d="M8 9h28M17 35l-2 5m12-5 2 5M17 17h10"/></svg></span>
+            <span>Throne <em>Finder</em></span>
+          </a>
+          <div class="planner-header__actions">
+            <button class="header-pill" data-open-saved><span>♡</span> Saved <b class="saved-count">0</b></button>
+            <button class="avatar-button" aria-label="Guest profile">G</button>
+          </div>
+        </header>
+
+        <div class="planner-grid">
+          <aside class="route-panel">
+            <div class="route-panel__heading">
+              <div class="eyebrow eyebrow--dark"><span></span> PLAN YOUR PEACE OF MIND</div>
+              <h2>Where are you headed?</h2>
+              <p>We’ll find the most dependable stops along the way.</p>
+            </div>
+
+            <form id="route-form">
+              <div class="route-inputs">
+                <div class="route-line" aria-hidden="true"><i></i><span></span><b></b></div>
+                <label><span>STARTING FROM</span><input id="start-input" value="Trinity Bellwoods Park" autocomplete="off" /><button type="button" id="locate-button" aria-label="Use my location">⌖</button></label>
+                <label><span>GOING TO</span><input id="end-input" value="St. Lawrence Market" autocomplete="off" /></label>
+              </div>
+
+              <div class="field-group">
+                <div class="field-heading"><label for="comfort-range">Comfort range</label><output id="range-output">20 min</output></div>
+                <p>Maximum time you want to travel between washrooms.</p>
+                <input type="range" id="comfort-range" min="10" max="40" step="5" value="20" />
+                <div class="range-labels"><span>10 min</span><span>40 min</span></div>
+              </div>
+
+              <div class="field-group">
+                <div class="field-heading"><span>Must-haves</span><button type="button" id="clear-filters">Clear</button></div>
+                <div class="filter-chips">
+                  <button type="button" class="chip active" data-filter="accessible">♿ Accessible</button>
+                  <button type="button" class="chip" data-filter="neutral">⚥ Gender neutral</button>
+                  <button type="button" class="chip" data-filter="changing">♙ Change table</button>
+                  <button type="button" class="chip" data-filter="staffed">● Staffed</button>
+                </div>
+              </div>
+
+              <button class="primary-button route-submit" type="submit"><span>Find my safest route</span><svg viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5"/></svg></button>
+              <div class="privacy-note">♙ <span>Your route stays on this device.</span></div>
+            </form>
+          </aside>
+
+          <section class="map-panel" aria-label="Route map">
+            <div class="map-toolbar">
+              <button class="map-mode active" data-mode="route">Route</button><button class="map-mode" data-mode="nearby">Nearby</button>
+            </div>
+            <button class="recenter" aria-label="Recenter map">⌖</button>
+            <div class="map-canvas">
+              <span class="water-label">LAKE ONTARIO</span>
+              <span class="park park--one">Queen's Park</span><span class="park park--two">Moss Park</span>
+              <span class="road road--one"></span><span class="road road--two"></span><span class="road road--three"></span><span class="road road--four"></span>
+              <svg class="route-path" viewBox="0 0 900 700" preserveAspectRatio="none" aria-hidden="true">
+                <path class="route-shadow" d="M110 525 C185 445 240 490 310 410 S390 295 495 340 S620 415 720 300 S805 190 845 145"/>
+                <path class="route-stroke" d="M110 525 C185 445 240 490 310 410 S390 295 495 340 S620 415 720 300 S805 190 845 145"/>
+              </svg>
+              <button class="map-pin map-pin--start" aria-label="Starting point"><i></i></button>
+              <button class="map-pin throne-pin throne-pin--one" data-throne="0" aria-label="David Pecaut Square washroom"><span>1</span></button>
+              <button class="map-pin throne-pin throne-pin--two" data-throne="1" aria-label="Nathan Phillips Square washroom"><span>2</span></button>
+              <button class="map-pin throne-pin throne-pin--three" data-throne="2" aria-label="St. Lawrence Market washroom"><span>3</span></button>
+              <button class="map-pin map-pin--end" aria-label="Destination">◆</button>
+            </div>
+
+            <div class="route-summary" id="route-summary">
+              <div class="route-summary__top"><div><span class="live-dot"></span><b>Your comfort route</b></div><button class="summary-close" aria-label="Hide route summary">×</button></div>
+              <div class="route-stats"><div><strong id="route-time">34 min</strong><span>walking</span></div><div><strong>3</strong><span>trusted stops</span></div><div><strong>4.8</strong><span>avg. rating</span></div></div>
+              <div class="stop-preview">
+                <span class="stop-number">1</span><div><b>David Pecaut Square</b><span>8 min away · Open until 10 PM</span></div><span class="rating">★ 4.9</span>
+              </div>
+              <button class="start-route" id="start-route"><span>Start route</span><span>→</span></button>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <aside class="saved-drawer" id="saved-drawer" aria-hidden="true">
+        <div class="drawer__header"><div><span>YOUR RELIABLE STOPS</span><h2>Saved thrones</h2></div><button class="icon-button drawer-close" aria-label="Close saved thrones">×</button></div>
+        <div class="saved-list" id="saved-list"></div>
+      </aside>
+      <div class="drawer-backdrop"></div>
+
+      <div class="detail-card" id="detail-card" aria-hidden="true"></div>
+      <div class="toast" role="status" aria-live="polite"></div>
+    </main>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

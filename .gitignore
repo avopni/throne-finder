@@ -1,0 +1,8 @@
+node_modules
+dist
+.reference
+.edge-*
+.chrome-review
+*-preview.png
+desktop-final.png
+.DS_Store
