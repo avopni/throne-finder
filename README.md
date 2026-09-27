@@ -8,10 +8,11 @@ A static, privacy-friendly route planner for finding public washrooms along a tr
 - Browser Geolocation API for the starting point
 - Nominatim for user-submitted Canadian address searches
 - Valhalla for pedestrian routes
-- City of Toronto Open Data for current washroom locations, status, hours, and accessibility details
+- OpenStreetMap/Overpass for route-area washroom queries, including available access, hours, fee, accessibility, and change-table tags
+- An OpenStreetMap North America amenities mirror as a fallback when public Overpass servers are busy
 - Google Maps universal directions links for starting navigation
 
-The current facility feed covers Toronto. The public endpoints are appropriate for a demonstration and light traffic. A larger production launch should use hosted geocoding and routing services with service guarantees.
+Washrooms are queried dynamically for the requested route or the current visible map area, so there is no city boundary or bundled facility list. The public endpoints are appropriate for a demonstration and light traffic. A larger production launch should use hosted geocoding, routing, and OpenStreetMap query services with service guarantees.
 
 ## Run locally
 

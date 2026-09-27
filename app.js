@@ -1,11 +1,15 @@
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-const TORONTO_WASHROOMS = 'https://services.arcgis.com/a3UyP711tRR4O2v8/ArcGIS/rest/services/Washroom_Facilities__Toronto/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&f=geojson&returnGeometry=true';
+const OVERPASS_ENDPOINTS = [
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.private.coffee/api/interpreter',
+];
+const OSM_AMENITIES = 'https://services6.arcgis.com/Do88DoK2xjTUCXd1/arcgis/rest/services/OSM_Amenities_NA/FeatureServer/0/query';
 const NOMINATIM = 'https://nominatim.openstreetmap.org/search';
 const VALHALLA = 'https://valhalla1.openstreetmap.de/route';
-const DEFAULT_START = { lat: 43.6476, lng: -79.4139, label: 'Trinity Bellwoods Park' };
-const DEFAULT_END = { lat: 43.6487, lng: -79.3715, label: 'St. Lawrence Market' };
+const DEFAULT_START = { lat: 43.4474, lng: -80.4937, label: 'Victoria Park, Kitchener' };
+const DEFAULT_END = { lat: 43.4644, lng: -80.5222, label: 'Waterloo Public Square' };
 
 const planner = document.querySelector('#planner');
 const drawer = document.querySelector('#saved-drawer');
@@ -27,9 +31,9 @@ let userMarker = null;
 let routeLayer = null;
 const endpointLayer = L.layerGroup();
 const throneLayer = L.layerGroup();
-let saved = JSON.parse(localStorage.getItem('throne-finder-saved') || '[]').filter(id => String(id).startsWith('toronto-'));
+let saved = JSON.parse(localStorage.getItem('throne-finder-saved') || '[]').filter(id => String(id).startsWith('osm-'));
 
-const map = L.map('live-map', { zoomControl: false, attributionControl: true }).setView([43.6532, -79.3832], 13);
+const map = L.map('live-map', { zoomControl: false, attributionControl: true }).setView([43.4516, -80.4925], 13);
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
   maxZoom: 19,
   attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
@@ -73,18 +77,21 @@ function escapeHtml(value = '') {
 
 function facilityTags(facility) {
   const tags = [];
-  if (/accessible/i.test(facility.accessibility)) tags.push('Accessible');
-  if (/child change table/i.test(facility.accessibility)) tags.push('Change table');
+  if (/yes|designated|limited|accessible/i.test(facility.accessibility)) tags.push('Accessible');
+  if (/yes|limited/i.test(facility.changingTable)) tags.push('Change table');
+  if (/yes/i.test(facility.unisex)) tags.push('Gender neutral');
+  if (facility.openingHours === '24/7') tags.push('24/7');
+  if (facility.fee === 'no') tags.push('Free');
+  if (facility.fee === 'yes') tags.push('Fee');
   tags.push(facility.type || 'Public washroom');
-  if (facility.status === '1') tags.push('Open status');
-  if (facility.status === '2') tags.push('Limited access');
   return [...new Set(tags)].slice(0, 4);
 }
 
 function statusText(facility) {
-  if (facility.status === '0') return facility.reason || 'Reported closed';
-  if (facility.status === '2') return facility.reason || 'Partially available';
-  return facility.hours && facility.hours !== 'None' ? facility.hours : 'Check posted hours';
+  if (/customers/i.test(facility.access)) return 'Customer access';
+  if (facility.openingHours) return facility.openingHours === '24/7' ? 'Open 24 hours' : facility.openingHours;
+  if (facility.fee === 'yes') return 'Fee may apply · Hours not listed';
+  return 'Public washroom · Hours not listed';
 }
 
 function updateSaved() {
@@ -93,7 +100,7 @@ function updateSaved() {
   const list = document.querySelector('#saved-list');
   const savedFacilities = saved.map(id => facilities.find(item => item.id === id)).filter(Boolean);
   if (!savedFacilities.length) {
-    list.innerHTML = '<div class="empty-state"><b>No saved thrones yet</b><span>Tap any washroom on the live map, then save it for later.</span></div>';
+    list.innerHTML = '<div class="empty-state"><b>No saved thrones yet</b><span>Search a route, tap any washroom on the live map, then save it for later.</span></div>';
     return;
   }
   list.innerHTML = savedFacilities.map(item => `<article class="saved-item"><div class="saved-item__top"><div><h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(statusText(item))}</p></div><button data-remove="${item.id}" aria-label="Remove ${escapeHtml(item.name)}">×</button></div><div class="saved-tags">${facilityTags(item).map(tag => `<span>${escapeHtml(tag)}</span>`).join('')}</div></article>`).join('');
@@ -115,38 +122,108 @@ function closeDrawer() {
 function openDetail(id) {
   const item = facilities.find(facility => facility.id === id);
   if (!item) return;
-  const officialLink = item.url ? `<a class="city-link" href="${escapeHtml(item.url)}" target="_blank" rel="noopener">City details ↗</a>` : '';
-  detail.innerHTML = `<h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(item.address || item.location || 'Toronto public washroom')}</p><p>${escapeHtml(statusText(item))}</p><div class="saved-tags">${facilityTags(item).map(tag => `<span>${escapeHtml(tag)}</span>`).join('')}</div>${officialLink}<div class="detail-actions"><button class="save-throne" data-save="${item.id}">${saved.includes(item.id) ? 'Saved ✓' : 'Save this throne'}</button><button class="close-detail">Close</button></div>`;
+  const officialLink = item.url ? `<a class="city-link" href="${escapeHtml(item.url)}" target="_blank" rel="noopener">OpenStreetMap details ↗</a>` : '';
+  detail.innerHTML = `<h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(item.address || item.location || 'Mapped public washroom')}</p><p>${escapeHtml(statusText(item))}</p><div class="saved-tags">${facilityTags(item).map(tag => `<span>${escapeHtml(tag)}</span>`).join('')}</div>${officialLink}<div class="detail-actions"><button class="save-throne" data-save="${item.id}">${saved.includes(item.id) ? 'Saved ✓' : 'Save this throne'}</button><button class="close-detail">Close</button></div>`;
   detail.classList.add('open');
   detail.setAttribute('aria-hidden', 'false');
 }
 
-async function loadFacilities() {
-  if (facilities.length) return facilities;
-  const response = await fetch(TORONTO_WASHROOMS);
-  if (!response.ok) throw new Error('The City washroom feed is unavailable.');
-  const data = await response.json();
-  facilities = data.features.flatMap(feature => {
-    const raw = feature.geometry?.coordinates;
-    const coordinates = Array.isArray(raw?.[0]) ? raw[0] : raw;
-    if (!coordinates || coordinates.length < 2) return [];
-    const p = feature.properties;
-    return [{
-      id: `toronto-${p.FID}`,
-      name: p.AssetNa13 || p.alterna5 || p.locatio4 || 'Public washroom',
-      location: p.locatio9 || '',
-      address: p.address11 || '',
-      type: p.type6 || 'Public washroom',
-      accessibility: p.accessi7 || '',
-      hours: p.hours8 || '',
-      status: String(p.Status16 ?? ''),
-      reason: p.Reason14 || '',
-      comment: p.Comment15 || '',
-      url: p.url10 || '',
-      lat: Number(coordinates[1]),
-      lng: Number(coordinates[0]),
-    }];
+function normalizeOsmFacility(tags, osmType, osmId, lat, lng) {
+  const streetAddress = [tags['addr:housenumber'], tags['addr:street']].filter(Boolean).join(' ');
+  return {
+    id: `osm-${osmType}-${osmId}`,
+    name: tags.name || tags.operator || 'Public washroom',
+    location: tags.description || '',
+    address: streetAddress || tags['addr:full'] || '',
+    type: tags.building === 'toilets' ? 'Washroom building' : 'Public washroom',
+    accessibility: tags['toilets:wheelchair'] || tags.wheelchair || '',
+    changingTable: tags.changing_table || tags['toilets:changing_table'] || '',
+    unisex: tags.unisex || tags['toilets:unisex'] || '',
+    openingHours: tags.opening_hours || '',
+    access: tags.access || 'yes',
+    fee: tags.fee || tags['toilets:fee'] || '',
+    building: tags.building || '',
+    operator: tags.operator || '',
+    url: `https://www.openstreetmap.org/${osmType}/${osmId}`,
+    lat: Number(lat),
+    lng: Number(lng),
+  };
+}
+
+function routeBounds(route, padding = .025) {
+  const latitudes = route.map(point => point[0]);
+  const longitudes = route.map(point => point[1]);
+  return {
+    south: Math.min(...latitudes) - padding,
+    west: Math.min(...longitudes) - padding,
+    north: Math.max(...latitudes) + padding,
+    east: Math.max(...longitudes) + padding,
+  };
+}
+
+async function queryOverpass(bounds) {
+  const query = `[out:json][timeout:15];nwr["amenity"="toilets"](${bounds.south},${bounds.west},${bounds.north},${bounds.east});out center tags;`;
+  let lastError;
+  for (const endpoint of OVERPASS_ENDPOINTS) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 7000);
+    try {
+      const response = await fetch(`${endpoint}?data=${encodeURIComponent(query)}`, { signal: controller.signal });
+      if (!response.ok) throw new Error(`OpenStreetMap query returned ${response.status}`);
+      const data = await response.json();
+      return data.elements.flatMap(element => {
+        const lat = element.lat ?? element.center?.lat;
+        const lng = element.lon ?? element.center?.lon;
+        return Number.isFinite(lat) && Number.isFinite(lng) ? [normalizeOsmFacility(element.tags || {}, element.type, element.id, lat, lng)] : [];
+      });
+    } catch (error) {
+      lastError = error;
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+  throw lastError || new Error('OpenStreetMap query failed.');
+}
+
+async function queryAmenitiesFallback(bounds) {
+  const params = new URLSearchParams({
+    where: "amenity='toilets'",
+    geometry: `${bounds.west},${bounds.south},${bounds.east},${bounds.north}`,
+    geometryType: 'esriGeometryEnvelope',
+    inSR: '4326',
+    spatialRel: 'esriSpatialRelIntersects',
+    outFields: '*',
+    outSR: '4326',
+    returnGeometry: 'true',
+    f: 'geojson',
   });
+  const response = await fetch(`${OSM_AMENITIES}?${params}`);
+  if (!response.ok) throw new Error('The public washroom search is unavailable.');
+  const data = await response.json();
+  return data.features.map(feature => {
+    const p = feature.properties;
+    return normalizeOsmFacility({
+      name: p.name,
+      operator: p.operator,
+      access: p.access,
+      building: p.building,
+      'addr:housenumber': p.addr_housenumber,
+      'addr:street': p.addr_street,
+    }, 'node', p.osm_id2, feature.geometry.coordinates[1], feature.geometry.coordinates[0]);
+  });
+}
+
+async function loadFacilitiesForBounds(bounds) {
+  let source = 'OpenStreetMap live query';
+  try {
+    facilities = await queryOverpass(bounds);
+  } catch (error) {
+    console.warn('Overpass unavailable; using the North America OSM mirror.', error);
+    source = 'OpenStreetMap North America mirror';
+    facilities = await queryAmenitiesFallback(bounds);
+  }
+  facilities = [...new Map(facilities.map(item => [item.id, item])).values()];
+  document.querySelector('.map-source').textContent = `${facilities.length} washrooms · ${source}`;
   updateSaved();
   return facilities;
 }
@@ -157,10 +234,10 @@ function activeFilters() {
 
 function passesFilters(item) {
   const filters = activeFilters();
-  return (!filters.includes('accessible') || /accessible/i.test(item.accessibility))
-    && (!filters.includes('open') || item.status === '1')
-    && (!filters.includes('changing') || /child change table/i.test(item.accessibility))
-    && (!filters.includes('building') || /building|community centre/i.test(item.type));
+  return (!filters.includes('accessible') || /yes|designated|limited|accessible/i.test(item.accessibility))
+    && (!filters.includes('public') || !/private|no|customers/i.test(item.access))
+    && (!filters.includes('changing') || /yes|limited/i.test(item.changingTable))
+    && (!filters.includes('building') || Boolean(item.building));
 }
 
 function haversine(a, b) {
@@ -226,8 +303,8 @@ async function getWalkingRoute(points) {
 
 async function geocode(value) {
   const normalized = value.trim().toLowerCase();
-  if (/trinity bellwoods/.test(normalized)) return { ...DEFAULT_START };
-  if (/st\.? lawrence market/.test(normalized)) return { ...DEFAULT_END };
+  if (/victoria park.*kitchener/.test(normalized)) return { ...DEFAULT_START };
+  if (/waterloo public square/.test(normalized)) return { ...DEFAULT_END };
   const params = new URLSearchParams({ q: `${value}, Ontario, Canada`, format: 'jsonv2', limit: '1', countrycodes: 'ca' });
   const response = await fetch(`${NOMINATIM}?${params}`);
   if (!response.ok) throw new Error(`Could not look up “${value}”.`);
@@ -265,7 +342,7 @@ function updateSummary(route, stops) {
   const preview = document.querySelector('.stop-preview');
   if (stops.length) {
     const first = stops[0];
-    preview.innerHTML = `<span class="stop-number">1</span><div><b>${escapeHtml(first.name)}</b><span>${Math.max(1, Math.round(route.time / 60 * first.progress))} min along route · ${escapeHtml(statusText(first))}</span></div><span class="rating">CITY DATA</span>`;
+    preview.innerHTML = `<span class="stop-number">1</span><div><b>${escapeHtml(first.name)}</b><span>${Math.max(1, Math.round(route.time / 60 * first.progress))} min along route · ${escapeHtml(statusText(first))}</span></div><span class="rating">OSM DATA</span>`;
   } else {
     preview.innerHTML = '<span class="stop-number">!</span><div><b>No matching facilities on this route</b><span>Try clearing one or more must-have filters.</span></div><span class="rating">LIVE</span>';
   }
@@ -283,12 +360,12 @@ async function planRoute() {
       startCoords.inputValue = startInput.value.trim();
     }
     if (endNeedsLookup) {
-      if (startNeedsLookup && !/trinity bellwoods/i.test(startInput.value)) await new Promise(resolve => setTimeout(resolve, 1100));
+      if (startNeedsLookup && !/victoria park.*kitchener/i.test(startInput.value)) await new Promise(resolve => setTimeout(resolve, 1100));
       endCoords = await geocode(endInput.value);
       endCoords.inputValue = endInput.value.trim();
     }
-    await loadFacilities();
     const directRoute = await getWalkingRoute([startCoords, endCoords]);
+    await loadFacilitiesForBounds(routeBounds(directRoute.coordinates));
     const stops = chooseRouteStops(directRoute.coordinates);
     const finalRoute = stops.length ? await getWalkingRoute([startCoords, ...stops, endCoords]) : directRoute;
     currentRoute = finalRoute;
@@ -347,12 +424,29 @@ document.querySelectorAll('.map-mode').forEach(button => button.addEventListener
   button.classList.add('active');
   currentMode = button.dataset.mode;
   try {
-    await loadFacilities();
-    if (currentMode === 'nearby') renderNearbyMarkers(); else renderRouteMarkers(currentRouteStops);
+    if (currentMode === 'nearby') {
+      const bounds = map.getBounds();
+      setLoading(true, 'Searching this map area…');
+      await loadFacilitiesForBounds({ south: bounds.getSouth(), west: bounds.getWest(), north: bounds.getNorth(), east: bounds.getEast() });
+      renderNearbyMarkers();
+    } else {
+      renderRouteMarkers(currentRouteStops);
+    }
   } catch (error) { showToast(error.message); }
+  finally { setLoading(false); }
 }));
 
-map.on('moveend', () => { if (currentMode === 'nearby' && facilities.length) renderNearbyMarkers(); });
+map.on('moveend', () => {
+  if (currentMode !== 'nearby') return;
+  clearTimeout(map.refreshTimer);
+  map.refreshTimer = setTimeout(async () => {
+    const bounds = map.getBounds();
+    try {
+      await loadFacilitiesForBounds({ south: bounds.getSouth(), west: bounds.getWest(), north: bounds.getNorth(), east: bounds.getEast() });
+      renderNearbyMarkers();
+    } catch (error) { showToast(error.message); }
+  }, 700);
+});
 map.on('click', event => {
   endCoords = { lat: event.latlng.lat, lng: event.latlng.lng, label: 'Dropped pin', inputValue: 'Dropped pin' };
   endInput.value = 'Dropped pin';
@@ -362,7 +456,7 @@ map.on('click', event => {
 
 document.querySelector('.recenter').addEventListener('click', () => {
   if (routeLayer) map.fitBounds(routeLayer.getBounds(), { padding: [55, 55] });
-  else map.setView([43.6532, -79.3832], 13);
+  else map.setView([43.4516, -80.4925], 13);
 });
 document.querySelector('.summary-close').addEventListener('click', () => document.querySelector('#route-summary').classList.add('hidden'));
 document.querySelector('#start-route').addEventListener('click', () => {
@@ -399,7 +493,6 @@ document.addEventListener('keydown', event => {
 startCoords.inputValue = startInput.value.trim();
 endCoords.inputValue = endInput.value.trim();
 updateSaved();
-loadFacilities().then(() => renderNearbyMarkers()).catch(error => console.warn(error));
 const demoParams = new URLSearchParams(window.location.search);
 if (demoParams.has('planner')) showPlanner();
 if (demoParams.has('route') || window.location.search.includes('route=1')) setTimeout(planRoute, 300);

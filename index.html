@@ -14,7 +14,7 @@
   <body>
     <main id="app">
       <section class="hero" id="home" aria-label="Throne Finder home">
-        <img class="hero__image" src="./assets/throne-finder-hero.png" alt="A public washroom pavilion beside a winding Toronto waterfront path" />
+        <img class="hero__image" src="./assets/throne-finder-hero.png" alt="A public washroom pavilion beside a winding waterfront path" />
         <div class="hero__scrim"></div>
 
         <header class="site-header">
@@ -33,7 +33,7 @@
         <div class="hero__content">
           <div class="eyebrow"><span></span> A calmer way to get there</div>
           <h1>Go where you need.<br /><i>Know where to go.</i></h1>
-          <p>Comfort-first routes built around clean, reliable public washrooms — because a little certainty changes everything.</p>
+          <p>Comfort-first routes built around mapped public washrooms — because a little certainty changes everything.</p>
           <div class="hero__actions">
             <button class="primary-button primary-button--large" data-open-planner>
               Find my route
@@ -45,7 +45,7 @@
 
         <div class="trust-card">
           <div class="trust-card__icon">✓</div>
-          <div><strong>Community checked</strong><span>Hours, access & cleanliness</span></div>
+          <div><strong>Community mapped</strong><span>Access, hours & amenities</span></div>
           <div class="avatars" aria-hidden="true"><span>MK</span><span>JL</span><span>+2k</span></div>
         </div>
         <div class="hero__scroll">SCROLL TO EXPLORE <span></span></div>
@@ -57,7 +57,7 @@
         <div class="steps">
           <article><span>01</span><div class="step-icon">↗</div><h3>Tell us where</h3><p>Add your start and destination. Choose how far you’re comfortable going between stops.</p></article>
           <article><span>02</span><div class="step-icon">♙</div><h3>Pick your comforts</h3><p>Filter for accessible stalls, gender neutral facilities, change tables, or staffed locations.</p></article>
-          <article><span>03</span><div class="step-icon">⌁</div><h3>Travel easier</h3><p>Follow a route with trusted washrooms placed exactly where you might need them.</p></article>
+          <article><span>03</span><div class="step-icon">⌁</div><h3>Travel easier</h3><p>Follow a route with mapped washrooms placed where you might need them.</p></article>
         </div>
         <button class="secondary-button" data-open-planner>Chart a comfort-first route <span>→</span></button>
       </section>
@@ -86,8 +86,8 @@
             <form id="route-form">
               <div class="route-inputs">
                 <div class="route-line" aria-hidden="true"><i></i><span></span><b></b></div>
-                <label><span>STARTING FROM</span><input id="start-input" value="Trinity Bellwoods Park" autocomplete="off" /><button type="button" id="locate-button" aria-label="Use my location">⌖</button></label>
-                <label><span>GOING TO</span><input id="end-input" value="St. Lawrence Market" autocomplete="off" /></label>
+                <label><span>STARTING FROM</span><input id="start-input" value="Victoria Park, Kitchener" autocomplete="off" /><button type="button" id="locate-button" aria-label="Use my location">⌖</button></label>
+                <label><span>GOING TO</span><input id="end-input" value="Waterloo Public Square" autocomplete="off" /></label>
               </div>
 
               <div class="field-group">
@@ -100,10 +100,10 @@
               <div class="field-group">
                 <div class="field-heading"><span>Must-haves</span><button type="button" id="clear-filters">Clear</button></div>
                 <div class="filter-chips">
-                  <button type="button" class="chip active" data-filter="accessible">♿ Accessible</button>
-                  <button type="button" class="chip active" data-filter="open">● Open status</button>
+                  <button type="button" class="chip" data-filter="accessible">♿ Accessible</button>
+                  <button type="button" class="chip active" data-filter="public">● Public access</button>
                   <button type="button" class="chip" data-filter="changing">♙ Change table</button>
-                  <button type="button" class="chip" data-filter="building">⌂ Permanent building</button>
+                  <button type="button" class="chip" data-filter="building">⌂ Permanent structure</button>
                 </div>
               </div>
 
@@ -119,13 +119,13 @@
             <button class="recenter" aria-label="Recenter map">⌖</button>
             <div id="live-map" class="map-canvas"></div>
             <div class="map-loading" id="map-loading"><span></span><b>Finding the safest route…</b></div>
-            <div class="map-source">Live washroom data · City of Toronto</div>
+            <div class="map-source">Live washroom search · OpenStreetMap</div>
 
             <div class="route-summary" id="route-summary">
               <div class="route-summary__top"><div><span class="live-dot"></span><b>Your comfort route</b></div><button class="summary-close" aria-label="Hide route summary">×</button></div>
               <div class="route-stats"><div><strong id="route-time">—</strong><span>walking</span></div><div><strong id="route-stop-count">—</strong><span>live stops</span></div><div><strong id="route-distance">—</strong><span>distance</span></div></div>
               <div class="stop-preview">
-                <span class="stop-number">1</span><div><b>David Pecaut Square</b><span>8 min away · Open until 10 PM</span></div><span class="rating">★ 4.9</span>
+                <span class="stop-number">1</span><div><b>Route washroom</b><span>Live route data will appear here</span></div><span class="rating">OSM DATA</span>
               </div>
               <button class="start-route" id="start-route"><span>Start route</span><span>→</span></button>
             </div>
